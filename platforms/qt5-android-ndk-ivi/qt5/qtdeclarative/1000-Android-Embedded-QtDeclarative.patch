@@ -1,0 +1,42 @@
+diff -uprN qtdeclarative-everywhere-src-5.15.3/src/qmltyperegistrar/qmltypes.prf qtdeclarative-everywhere-opensource-src-5.15.3/src/qmltyperegistrar/qmltypes.prf
+--- qtdeclarative-everywhere-src-5.15.3/src/qmltyperegistrar/qmltypes.prf	2021-03-18 20:46:04.000000000 +0800
++++ qtdeclarative-everywhere-opensource-src-5.15.3/src/qmltyperegistrar/qmltypes.prf	2022-04-01 22:54:45.568364908 +0800
+@@ -44,7 +44,7 @@ qt_module_deps = $$replace(qt_module_dep
+ qt_module_deps = $$unique(qt_module_deps)
+ 
+ for(dep, qt_module_deps) {
+-    android:ABI = _$${ANDROID_TARGET_ARCH}
++    android:!android-embedded:ABI = _$${ANDROID_TARGET_ARCH}
+     METATYPES_FILENAME = $$lower($$eval(QT.$${dep}.module))$${ABI}_metatypes.json
+     INSTALLED_METATYPES = $$[QT_INSTALL_LIBS]/metatypes/$$METATYPES_FILENAME
+     isEmpty(MODULE_BASE_OUTDIR) {
+@@ -91,7 +91,7 @@ qmltyperegistrar_qmltypes.commands = $$e
+ install_qmltypes {
+     INSTALL_QML_FILES = false
+ 
+-    android {
++    android:!android-embedded: {
+         build_pass {
+             isEmpty(ANDROID_ABIS): ANDROID_ABIS = $$ALL_ANDROID_ABIS
+             ABI = $$first(ANDROID_ABIS)
+diff -uprN qtdeclarative-everywhere-src-5.15.3/tests/auto/qml/qqmllanguage/qqmllanguage.pro qtdeclarative-everywhere-opensource-src-5.15.3/tests/auto/qml/qqmllanguage/qqmllanguage.pro
+--- qtdeclarative-everywhere-src-5.15.3/tests/auto/qml/qqmllanguage/qqmllanguage.pro	2021-03-18 20:46:04.000000000 +0800
++++ qtdeclarative-everywhere-opensource-src-5.15.3/tests/auto/qml/qqmllanguage/qqmllanguage.pro	2022-04-01 22:02:40.387525396 +0800
+@@ -21,4 +21,4 @@ include (../../shared/util.pri)
+ OTHER_FILES += \
+     data/readonlyObjectProperty.qml
+ 
+-android: RESOURCES += qqmllanguage.qrc
++android:!android-embedded: RESOURCES += qqmllanguage.qrc
+diff -uprN qtdeclarative-everywhere-src-5.15.3/tools/tools.pro qtdeclarative-everywhere-opensource-src-5.15.3/tools/tools.pro
+--- qtdeclarative-everywhere-src-5.15.3/tools/tools.pro	2021-03-18 20:46:04.000000000 +0800
++++ qtdeclarative-everywhere-opensource-src-5.15.3/tools/tools.pro	2022-04-01 22:02:40.467526206 +0800
+@@ -11,7 +11,7 @@ qtConfig(qml-devtools) {
+     qtConfig(commandlineparser):qtConfig(xmlstreamwriter): SUBDIRS += qmlcachegen
+ }
+ 
+-qtConfig(thread):!android|android_app:!wasm:!rtems {
++qtConfig(thread):!android|android_app:!android-embedded:!wasm:!rtems {
+     SUBDIRS += \
+         qml
+ 

@@ -1,0 +1,8 @@
+#qtbase options
+-eglfs
+-qpa eglfs
+-feature-eglfs_sffg
+-qt-zlib
+-qt-libpng
+-qt-libjpeg
+-qt-freetype

@@ -1,0 +1,1087 @@
+diff -uprN qtbase-everywhere-src-5.15.3/configure.pri qtbase-everywhere-opensource-src-5.15.3/configure.pri
+--- qtbase-everywhere-src-5.15.3/configure.pri	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/configure.pri	2022-04-18 14:36:07.909604510 +0800
+@@ -534,7 +534,7 @@ defineTest(qtConfOutput_prepareOptions)
+         $${currentConfig}.output.devicePro += \
+             "QMAKE_MAC_SDK = $$val_escape(config.input.sdk)"
+     }
+-    android {
++    android:!android-embedded {
+         sdk_root = $$eval(config.input.android-sdk)
+         isEmpty(sdk_root): \
+             sdk_root = $$getenv(ANDROID_SDK_ROOT)
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/android-embedded-clang/qmake.conf qtbase-everywhere-opensource-src-5.15.3/mkspecs/android-embedded-clang/qmake.conf
+--- qtbase-everywhere-src-5.15.3/mkspecs/android-embedded-clang/qmake.conf	1970-01-01 08:00:00.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/android-embedded-clang/qmake.conf	2022-04-20 20:49:04.616962335 +0800
+@@ -0,0 +1,79 @@
++#*********************************************************************************
++#  *Copyright(C): Juntuan.Lu, 2020-2030, All rights reserved.
++#  *Author:  Juntuan.Lu
++#  *Version: 1.0
++#  *Date:  2021/11/29
++#  *Email: 931852884@qq.com
++#  *Description:
++#  *Others:
++#  *Function List:
++#  *History:
++#**********************************************************************************
++
++MAKEFILE_GENERATOR              = UNIX
++QMAKE_PLATFORM                  = android
++QMAKE_COMPILER                  = gcc clang llvm
++
++NDK_LLVM_PATH                   = $$(NDK_LLVM_PATH)
++isEmpty(NDK_LLVM_PATH): error("You need to set the NDK_LLVM_PATH environment.")
++
++include(../common/linux.conf)
++include(../common/gcc-base-unix.conf)
++include(../common/clang.conf)
++
++load(device_config)
++
++ANDROID_PLATFORM                = android-29
++ANDROID_ABI                     = arm64-v8a
++EGLFS_DEVICE_INTEGRATION        = eglfs_sffg
++ANDROID_USE_LLVM                = true
++ALL_ANDROID_ABIS                = $$ANDROID_ABI
++arm64-v8a.sdk                   = $$ANDROID_ABI
++arm64-v8a.target                = $$ANDROID_ABI
++arm64-v8a.dir_affix             = $$ANDROID_ABI
++arm64-v8a.CONFIG                = $$ANDROID_ABI
++arm64-v8a.deployment_identifier = $$ANDROID_ABI
++CONFIG                          += $$ANDROID_PLATFORM android-embedded
++DEFINES                         += ANDROID_EMBEDDED
++
++QMAKE_CC                        = $$NDK_LLVM_PATH/bin/clang
++QMAKE_CXX                       = $$NDK_LLVM_PATH/bin/clang++
++QMAKE_AR                        = $$NDK_LLVM_PATH/bin/llvm-ar cqs
++QMAKE_RANLIB                    = $$NDK_LLVM_PATH/bin/llvm-ranlib
++QMAKE_OBJCOPY                   = $$NDK_LLVM_PATH/bin/llvm-objcopy
++QMAKE_OBJDUMP                   = $$NDK_LLVM_PATH/bin/llvm-objdump
++QMAKE_NM                        = $$NDK_LLVM_PATH/bin/llvm-nm -P
++QMAKE_AS                        = $$NDK_LLVM_PATH/bin/llvm-as
++QMAKE_STRIP                     = $$NDK_LLVM_PATH/bin/llvm-strip
++
++QMAKE_LINK_C                    = $$QMAKE_CC
++QMAKE_LINK_C_SHLIB              = $$QMAKE_CC
++QMAKE_LINK                      = $$QMAKE_CXX
++QMAKE_LINK_SHLIB                = $$QMAKE_CXX
++
++QMAKE_LIBS_X11                  =
++QMAKE_LIBS_THREAD               =
++QMAKE_LIBS_OPENGL               =
++QMAKE_INCDIR_POST               =
++QMAKE_INCDIR_X11                =
++QMAKE_LIBDIR_X11                =
++QMAKE_INCDIR_OPENGL             =
++QMAKE_LIBDIR_OPENGL             =
++
++BUILD_TARGET_PREFIX             = $$(BUILD_TARGET_PREFIX)
++TARGET_SYSROOT                  = $$(TARGET_SYSROOT)
++!isEmpty(BUILD_TARGET_PREFIX) {
++    QMAKE_DEFAULT_INCDIRS += $$BUILD_TARGET_PREFIX/include
++    QMAKE_DEFAULT_LIBDIRS += $$BUILD_TARGET_PREFIX/lib
++    QMAKE_INCDIR += $$BUILD_TARGET_PREFIX/include
++    QMAKE_LIBDIR += $$BUILD_TARGET_PREFIX/lib
++} else {
++    !isEmpty(TARGET_SYSROOT) {
++        QMAKE_DEFAULT_INCDIRS += $$TARGET_SYSROOT/usr/include
++        QMAKE_DEFAULT_LIBDIRS += $$TARGET_SYSROOT/usr/lib
++        QMAKE_INCDIR += $$TARGET_SYSROOT/usr/include
++        QMAKE_LIBDIR += $$TARGET_SYSROOT/usr/lib
++    }
++}
++
++load(qt_config)
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/android-embedded-clang/qplatformdefs.h qtbase-everywhere-opensource-src-5.15.3/mkspecs/android-embedded-clang/qplatformdefs.h
+--- qtbase-everywhere-src-5.15.3/mkspecs/android-embedded-clang/qplatformdefs.h	1970-01-01 08:00:00.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/android-embedded-clang/qplatformdefs.h	2022-04-13 11:29:51.920109191 +0800
+@@ -0,0 +1,177 @@
++/****************************************************************************
++**
++** Copyright (C) 2017 The Qt Company Ltd.
++** Contact: https://www.qt.io/licensing/
++**
++** This file is part of the qmake spec of the Qt Toolkit.
++**
++** $QT_BEGIN_LICENSE:LGPL$
++** Commercial License Usage
++** Licensees holding valid commercial Qt licenses may use this file in
++** accordance with the commercial license agreement provided with the
++** Software or, alternatively, in accordance with the terms contained in
++** a written agreement between you and The Qt Company. For licensing terms
++** and conditions see https://www.qt.io/terms-conditions. For further
++** information use the contact form at https://www.qt.io/contact-us.
++**
++** GNU Lesser General Public License Usage
++** Alternatively, this file may be used under the terms of the GNU Lesser
++** General Public License version 3 as published by the Free Software
++** Foundation and appearing in the file LICENSE.LGPL3 included in the
++** packaging of this file. Please review the following information to
++** ensure the GNU Lesser General Public License version 3 requirements
++** will be met: https://www.gnu.org/licenses/lgpl-3.0.html.
++**
++** GNU General Public License Usage
++** Alternatively, this file may be used under the terms of the GNU
++** General Public License version 2.0 or (at your option) the GNU General
++** Public license version 3 or any later version approved by the KDE Free
++** Qt Foundation. The licenses are as published by the Free Software
++** Foundation and appearing in the file LICENSE.GPL2 and LICENSE.GPL3
++** included in the packaging of this file. Please review the following
++** information to ensure the GNU General Public License requirements will
++** be met: https://www.gnu.org/licenses/gpl-2.0.html and
++** https://www.gnu.org/licenses/gpl-3.0.html.
++**
++** $QT_END_LICENSE$
++**
++****************************************************************************/
++
++#ifndef QPLATFORMDEFS_H
++#define QPLATFORMDEFS_H
++
++// Get Qt defines/settings
++
++#include "qglobal.h"
++
++// Set any POSIX/XOPEN defines at the top of this file to turn on specific APIs
++
++// 1) need to reset default environment if _BSD_SOURCE is defined
++// 2) need to specify POSIX thread interfaces explicitly in glibc 2.0
++// 3) it seems older glibc need this to include the X/Open stuff
++
++#include <unistd.h>
++
++// We are hot - unistd.h should have turned on the specific APIs we requested
++
++#include <features.h>
++#include <pthread.h>
++#include <dirent.h>
++#include <fcntl.h>
++#include <grp.h>
++#include <pwd.h>
++#include <signal.h>
++#include <dlfcn.h>
++
++#include <sys/types.h>
++#include <sys/ioctl.h>
++#include <sys/ipc.h>
++#include <sys/time.h>
++#include <sys/socket.h>
++#include <sys/stat.h>
++#include <sys/wait.h>
++
++#ifndef _GNU_SOURCE
++#  define _GNU_SOURCE
++#endif
++
++#ifdef QT_LARGEFILE_SUPPORT
++#define QT_STATBUF              struct stat64
++#define QT_STATBUF4TSTAT        struct stat64
++#define QT_STAT                 ::stat64
++#define QT_FSTAT                ::fstat64
++#define QT_LSTAT                ::lstat64
++#define QT_OPEN                 ::open64
++#define QT_TRUNCATE             ::truncate64
++#define QT_FTRUNCATE            ::ftruncate64
++#define QT_LSEEK                ::lseek64
++#else
++#define QT_STATBUF              struct stat
++#define QT_STATBUF4TSTAT        struct stat
++#define QT_STAT                 ::stat
++#define QT_FSTAT                ::fstat
++#define QT_LSTAT                ::lstat
++#define QT_OPEN                 ::open
++#define QT_TRUNCATE             ::truncate
++#define QT_FTRUNCATE            ::ftruncate
++#define QT_LSEEK                ::lseek
++#endif
++
++#ifdef QT_LARGEFILE_SUPPORT
++#define QT_FOPEN                ::fopen64
++#define QT_FSEEK                ::fseeko64
++#define QT_FTELL                ::ftello64
++#define QT_FGETPOS              ::fgetpos64
++#define QT_FSETPOS              ::fsetpos64
++#define QT_MMAP                 ::mmap64
++#define QT_FPOS_T               fpos64_t
++#define QT_OFF_T                off64_t
++#else
++#define QT_FOPEN                ::fopen
++#define QT_FSEEK                ::fseek
++#define QT_FTELL                ::ftell
++#define QT_FGETPOS              ::fgetpos
++#define QT_FSETPOS              ::fsetpos
++#define QT_MMAP                 ::mmap
++#define QT_FPOS_T               fpos_t
++#define QT_OFF_T                long
++#endif
++
++#define QT_STAT_REG             S_IFREG
++#define QT_STAT_DIR             S_IFDIR
++#define QT_STAT_MASK            S_IFMT
++#define QT_STAT_LNK             S_IFLNK
++#define QT_SOCKET_CONNECT       ::connect
++#define QT_SOCKET_BIND          ::bind
++#define QT_FILENO               fileno
++#define QT_CLOSE                ::close
++#define QT_READ                 ::read
++#define QT_WRITE                ::write
++#define QT_ACCESS               ::access
++#define QT_GETCWD               ::getcwd
++#define QT_CHDIR                ::chdir
++#define QT_MKDIR                ::mkdir
++#define QT_RMDIR                ::rmdir
++#define QT_OPEN_LARGEFILE       O_LARGEFILE
++#define QT_OPEN_RDONLY          O_RDONLY
++#define QT_OPEN_WRONLY          O_WRONLY
++#define QT_OPEN_RDWR            O_RDWR
++#define QT_OPEN_CREAT           O_CREAT
++#define QT_OPEN_TRUNC           O_TRUNC
++#define QT_OPEN_APPEND          O_APPEND
++#define QT_OPEN_EXCL            O_EXCL
++
++// Directory iteration
++#define QT_DIR                  DIR
++
++#define QT_OPENDIR              ::opendir
++#define QT_CLOSEDIR             ::closedir
++
++#if defined(QT_LARGEFILE_SUPPORT) \
++        && defined(QT_USE_XOPEN_LFS_EXTENSIONS) \
++        && !defined(QT_NO_READDIR64)
++#define QT_DIRENT               struct dirent64
++#define QT_READDIR              ::readdir64
++#define QT_READDIR_R            ::readdir64_r
++#else
++#define QT_DIRENT               struct dirent
++#define QT_READDIR              ::readdir
++#define QT_READDIR_R            ::readdir_r
++#endif
++
++#define QT_SOCKET_CONNECT       ::connect
++#define QT_SOCKET_BIND          ::bind
++
++
++#define QT_SIGNAL_RETTYPE       void
++#define QT_SIGNAL_ARGS          int
++#define QT_SIGNAL_IGNORE        SIG_IGN
++
++#define QT_SOCKLEN_T            socklen_t
++
++#if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 500)
++#define QT_SNPRINTF             ::snprintf
++#define QT_VSNPRINTF            ::vsnprintf
++#endif
++
++#endif // QPLATFORMDEFS_H
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/android/android.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/android/android.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/android/android.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/android/android.prf	2022-04-18 14:36:08.546275705 +0800
+@@ -30,7 +30,7 @@ TARGET_FOR_ANDROID_DEPLOYMENT_SETTINGS =
+ #   during Qt configuration, by checkking for the presence of single_arch
+ build_pass|if(single_android_abi:!single_arch) {
+     contains(TEMPLATE, ".*app") {
+-        !android_app {
++        !android_app:!android-embedded {
+             !contains(TARGET, ".so") {
+                 single_arch:TARGET = lib$${TARGET}.so
+                        else:TARGET = lib$${TARGET}_$${QT_ARCH}.so
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/android/default_pre.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/android/default_pre.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/android/default_pre.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/android/default_pre.prf	2022-04-18 14:36:08.546275705 +0800
+@@ -76,7 +76,7 @@ else: equals(QT_ARCH, x86_64): CROSS_COM
+ else: equals(QT_ARCH, arm64-v8a): CROSS_COMPILE = $$NDK_LLVM_PATH/bin/aarch64-linux-android-
+ else: CROSS_COMPILE = $$NDK_LLVM_PATH/bin/arm-linux-androideabi-
+ 
+-QMAKE_RANLIB            = $${CROSS_COMPILE}ranlib
++isEmpty(QMAKE_RANLIB):QMAKE_RANLIB            = $${CROSS_COMPILE}ranlib
+ QMAKE_LINK_SHLIB        = $$QMAKE_LINK
+ QMAKE_LFLAGS            =
+ 
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/create_cmake.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/create_cmake.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/create_cmake.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/create_cmake.prf	2022-04-18 14:36:08.546275705 +0800
+@@ -43,7 +43,7 @@ CMAKE_INCLUDE_NAME = $$eval(QT.$${MODULE
+ CMAKE_QT_STEM = $${TARGET}
+ 
+ # ANDROID_ABI is set by the android toolchain file, see https://developer.android.com/ndk/guides/cmake
+-android: CMAKE_QT_STEM = $$replace(CMAKE_QT_STEM, "_$${QT_ARCH}", '_\$\{ANDROID_ABI\}')
++android:!android-embedded: CMAKE_QT_STEM = $$replace(CMAKE_QT_STEM, "_$${QT_ARCH}", '_\$\{ANDROID_ABI\}')
+ 
+ # On macOS when building just a debug configuration which is not part of debug_and_release,
+ # $${TARGET} already contains a _debug suffix, as per the following call chain:
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/java.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/java.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/java.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/java.prf	2022-04-18 14:36:08.546275705 +0800
+@@ -1,5 +1,5 @@
+ TEMPLATE = lib
+-android {
++android:!android-embedded {
+     load(sdk)
+ 
+     # FIXME: This is a hack to work around some hardcoded values in the android.prf. The
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/qmake_use.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qmake_use.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/qmake_use.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qmake_use.prf	2022-04-18 14:36:08.549609062 +0800
+@@ -24,7 +24,7 @@ for(ever) {
+ 
+         QMAKE_LIBDIR += $$eval(QMAKE_LIBDIR_$$nu)
+ 
+-        android {
++        android:!android-embedded {
+             ABI_LIBS = $$eval(QMAKE_LIBS_$${nu}_$${QT_ARCH})
+             isEmpty(ABI_LIBS): ABI_LIBS = $$eval(QMAKE_LIBS_$${nu})
+             LIBS$${suffix} += $$ABI_LIBS
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/qml_module.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qml_module.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/qml_module.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qml_module.prf	2022-04-18 14:36:08.549609062 +0800
+@@ -60,7 +60,7 @@ qmlfiles.path = $${qmldir.path}
+ 
+ INSTALL_QML_FILES = false
+ 
+-android {
++android:!android-embedded {
+     single_android_abi|build_pass {
+         isEmpty(ANDROID_ABIS): ANDROID_ABIS = $$ALL_ANDROID_ABIS
+         ABI = $$first(ANDROID_ABIS)
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/qmltestcase.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qmltestcase.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/qmltestcase.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qmltestcase.prf	2022-04-18 14:36:08.549609062 +0800
+@@ -1,7 +1,7 @@
+ !isEmpty(SOURCES) {
+     QT += qml qmltest
+     load(testcase)
+-    !android {
++    !android | android-embedded {
+         contains(TEMPLATE, vc.*): DEFINES += QUICK_TEST_SOURCE_DIR=\"$$_PRO_FILE_PWD_\"
+         else: DEFINES += QUICK_TEST_SOURCE_DIR=$$shell_quote(\"$$_PRO_FILE_PWD_\")
+     } else {
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/qt_android_deps.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qt_android_deps.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/qt_android_deps.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qt_android_deps.prf	2022-04-18 14:36:08.549609062 +0800
+@@ -15,7 +15,7 @@
+ 
+ ANDROID_DEPENDS_DIR = $$MODULE_BASE_OUTDIR/lib/
+ DEPENDENCY_FILE = $$ANDROID_DEPENDS_DIR$$TARGET-android-dependencies.xml
+-build_pass|single_android_abi:!isEmpty(QT_ARCH): {
++build_pass|single_android_abi:!android-embedded:!isEmpty(QT_ARCH): {
+     !isEmpty(MODULE_PLUGIN_TYPES) {
+         for(PLUGIN_TYPE, MODULE_PLUGIN_TYPES) {
+             ANDROID_BUNDLED_FILES += "plugins/$$PLUGIN_TYPE"
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/qt_functions.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qt_functions.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/qt_functions.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qt_functions.prf	2022-04-18 14:36:08.549609062 +0800
+@@ -1,7 +1,7 @@
+ 
+ defineReplace(qtPlatformTargetSuffix) {
+     suffix =
+-    android: return($${suffix}_$${QT_ARCH})
++    android:!android-embedded: return($${suffix}_$${QT_ARCH})
+     win32 {
+         CONFIG(debug, debug|release) {
+             mingw {
+@@ -32,7 +32,7 @@ defineReplace(qtLibraryTarget) {
+ }
+ 
+ defineReplace(qt5LibraryTarget) {
+-   android {
++   android:!android-embedded {
+         LIBRARY_NAME_PREFIX = $$2
+         LIBRARY_NAME_PREFIX = $$replace(LIBRARY_NAME_PREFIX, "//", "/")
+         LIBRARY_NAME_PREFIX = $$replace(LIBRARY_NAME_PREFIX, "/", "_")
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/qt_helper_lib.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qt_helper_lib.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/qt_helper_lib.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qt_helper_lib.prf	2022-04-18 14:36:08.549609062 +0800
+@@ -58,7 +58,7 @@ win32|CONFIG(static, static|shared) {
+         "QMAKE_DEPENDS_$${ucmodule}_LD =$$join(LD_USES, " ", " ")" \
+         "QMAKE_INCDIR_$${ucmodule} = $$val_escape(MODULE_INCLUDEPATH)" \
+         "QMAKE_DEFINES_$${ucmodule} = $$val_escape(MODULE_DEFINES)"
+-    !single_android_abi:android {
++    !single_android_abi:android:!android-embedded {
+         MODULE_PRI_CONT += "QMAKE_LIBS_$${ucmodule} ="
+     } else: if(msvc|qtConfig(debug_and_release)): {
+         win32: \
+@@ -78,7 +78,7 @@ win32|CONFIG(static, static|shared) {
+             "QMAKE_LIBS_$${ucmodule} = $$val_escape(MODULE_LIBS)"
+     }
+     write_file($$MODULE_PRI, MODULE_PRI_CONT)|error()
+-} else: android {
++} else: android:!android-embedded {
+     ABI_TARGET = $$qt5LibraryTarget($$TARGET)
+     ABI_MODULE_LIBS = $$DESTDIR/$$prefix$${ABI_TARGET}.$$suffix
+     MODULE_PRI_CONT = "QMAKE_LIBS_$${ucmodule}_$${QT_ARCH} = $$val_escape(ABI_MODULE_LIBS)"
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/qt_module.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qt_module.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/qt_module.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qt_module.prf	2022-04-18 14:36:08.549609062 +0800
+@@ -213,7 +213,7 @@ equals(QT_ARCH, i386):contains(QT_CPU_FE
+     QMAKE_CXXFLAGS += -mfpmath=sse
+ }
+ 
+-android: CONFIG += qt_android_deps no_linker_version_script
++android:!android-embedded: CONFIG += qt_android_deps no_linker_version_script
+ 
+ !header_module:unix:!isEmpty(QMAKE_LFLAGS_VERSION_SCRIPT):!no_linker_version_script:!static {
+     verscript = $${TARGET}.version
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/qt_module_pris.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qt_module_pris.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/qt_module_pris.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/qt_module_pris.prf	2022-04-18 14:36:08.549609062 +0800
+@@ -238,7 +238,7 @@ defineReplace(qtExportLibsForModule) {
+     }
+     cache(QT_MODULES, transient)
+ 
+-} else:android:!no_private_module:!internal_module {
++} else:android:!android-embedded:!no_private_module:!internal_module {
+     MODULE_PRIVATE_PRI_CONT = $$qtExportLibsForModule($${MODULE}_private, _$${QT_ARCH})
+     write_file($$MODULE_PRIVATE_PRI, MODULE_PRIVATE_PRI_CONT, append)|error()
+ }
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/resources_functions.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/resources_functions.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/resources_functions.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/resources_functions.prf	2022-04-18 14:36:08.549609062 +0800
+@@ -35,7 +35,7 @@ defineTest(qtFlattenResources) {
+         }
+ 
+         RESOURCES -= $$resource
+-        !android|isEmpty(BUILDS)|build_pass {
++        !android|android-embedded|isEmpty(BUILDS)|build_pass {
+             resource_file = $$absolute_path($$RCC_DIR/qmake_$${resource}.qrc, $$OUT_PWD)
+             RESOURCES += $$resource_file
+         } else {
+diff -uprN qtbase-everywhere-src-5.15.3/mkspecs/features/testcase.prf qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/testcase.prf
+--- qtbase-everywhere-src-5.15.3/mkspecs/features/testcase.prf	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/mkspecs/features/testcase.prf	2022-04-18 14:36:08.549609062 +0800
+@@ -56,7 +56,7 @@ debug_and_release:debug_and_release_targ
+ 
+ # Allow for a custom test runner script
+ 
+-android: isEmpty($(TESTRUNNER)) {
++android:!android-embedded: isEmpty($(TESTRUNNER)) {
+     APK_PATH = $$shell_path($$OUT_PWD/android-build/$${TARGET}.apk)
+     qtPrepareTool(ANDROIDTESTRUNNER, androidtestrunner)
+     qtPrepareTool(ANDROIDDEPLOYQT, androiddeployqt)
+@@ -74,7 +74,7 @@ unix {
+ 
+     app_bundle: \
+         $${type}.commands += $${TEST_TARGET_DIR}/$(QMAKE_TARGET).app/Contents/MacOS/$(QMAKE_TARGET)
+-    else: !android: \
++    else: !android | android-embedded: \
+         $${type}.commands += $${TEST_TARGET_DIR}/$(QMAKE_TARGET)
+ } else {
+     # Windows
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/configure.json qtbase-everywhere-opensource-src-5.15.3/src/corelib/configure.json
+--- qtbase-everywhere-src-5.15.3/src/corelib/configure.json	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/configure.json	2022-04-18 14:36:08.756277199 +0800
+@@ -355,7 +355,7 @@
+                     "std::future<int> f = std::async([]() { return 42; });",
+                     "(void)f.get();"
+                 ],
+-                "qmake": "unix:LIBS += -lpthread"
++                "qmake": "unix:!android-embedded:LIBS += -lpthread"
+             }
+         },
+         "cxx11_random": {
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/corelib.pro qtbase-everywhere-opensource-src-5.15.3/src/corelib/corelib.pro
+--- qtbase-everywhere-src-5.15.3/src/corelib/corelib.pro	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/corelib.pro	2022-04-18 14:36:08.756277199 +0800
+@@ -12,7 +12,7 @@ CONFIG += qt_tracepoints
+ 
+ CONFIG += $$MODULE_CONFIG
+ DEFINES += $$MODULE_DEFINES
+-android: DEFINES += LIBS_SUFFIX='\\"_$${QT_ARCH}.so\\"'
++android:!android-embedded: DEFINES += LIBS_SUFFIX='\\"_$${QT_ARCH}.so\\"'
+ DEFINES += QT_NO_USING_NAMESPACE QT_NO_FOREACH
+ msvc:equals(QT_ARCH, i386): QMAKE_LFLAGS += /BASE:0x67000000
+ 
+@@ -100,7 +100,7 @@ cmake_umbrella_config_module_location_fo
+ cmake_umbrella_config_version_file.input = $$PWD/../../mkspecs/features/data/cmake/Qt5ConfigVersion.cmake.in
+ cmake_umbrella_config_version_file.output = $$DESTDIR/cmake/Qt5/Qt5ConfigVersion.cmake
+ 
+-android {
++android:!android-embedded {
+     cmake_android_support.input = $$PWD/Qt5AndroidSupport.cmake
+     cmake_android_support.output = $$DESTDIR/cmake/Qt5Core/Qt5AndroidSupport.cmake
+     cmake_android_support.CONFIG = verbatim
+@@ -157,7 +157,7 @@ QMAKE_SUBSTITUTES += \
+     cmake_extras_mkspec_dir \
+     cmake_extras_mkspec_dir_for_install
+ 
+-android {
++android:!android-embedded {
+     QMAKE_SUBSTITUTES += cmake_android_support
+     ctest_qt5_module_files.files += $$cmake_android_support.output
+ }
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/global/qsystemdetection.h qtbase-everywhere-opensource-src-5.15.3/src/corelib/global/qsystemdetection.h
+--- qtbase-everywhere-src-5.15.3/src/corelib/global/qsystemdetection.h	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/global/qsystemdetection.h	2022-04-18 14:36:08.769610628 +0800
+@@ -117,6 +117,9 @@
+ #  define Q_OS_LINUX
+ #elif defined(__ANDROID__) || defined(ANDROID)
+ #  define Q_OS_ANDROID
++#if defined(__ANDROID_EMBEDDED__) || defined(ANDROID_EMBEDDED)
++#  define Q_OS_ANDROID_EMBEDDED
++#endif
+ #  define Q_OS_LINUX
+ #elif defined(__CYGWIN__)
+ #  define Q_OS_CYGWIN
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/io/qfileselector.cpp qtbase-everywhere-opensource-src-5.15.3/src/corelib/io/qfileselector.cpp
+--- qtbase-everywhere-src-5.15.3/src/corelib/io/qfileselector.cpp	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/io/qfileselector.cpp	2022-04-18 14:36:08.772943985 +0800
+@@ -197,7 +197,7 @@ QString QFileSelector::select(const QStr
+ static bool isLocalScheme(const QString &file)
+ {
+     bool local = file == QLatin1String("qrc");
+-#ifdef Q_OS_ANDROID
++#if defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED)
+     local |= file == QLatin1String("assets");
+ #endif
+     return local;
+@@ -218,7 +218,7 @@ QUrl QFileSelector::select(const QUrl &f
+     QUrl ret(filePath);
+     if (isLocalScheme(filePath.scheme())) {
+         QLatin1String scheme(":");
+-#ifdef Q_OS_ANDROID
++#if defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED)
+         // use other scheme because ":" means "qrc" here
+         if (filePath.scheme() == QLatin1String("assets"))
+             scheme = QLatin1String("assets:");
+@@ -352,7 +352,7 @@ QStringList QFileSelectorPrivate::platfo
+ #  endif
+ #elif defined(Q_OS_UNIX)
+     ret << QStringLiteral("unix");
+-#  if !defined(Q_OS_ANDROID) && !defined(Q_OS_QNX)
++#if !defined(Q_OS_ANDROID) && !defined(Q_OS_QNX)
+     // we don't want "linux" for Android or two instances of "qnx" for QNX
+     ret << QSysInfo::kernelType();
+ #     ifdef Q_OS_MAC
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/io/qloggingregistry.cpp qtbase-everywhere-opensource-src-5.15.3/src/corelib/io/qloggingregistry.cpp
+--- qtbase-everywhere-src-5.15.3/src/corelib/io/qloggingregistry.cpp	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/io/qloggingregistry.cpp	2022-04-18 14:36:08.776277342 +0800
+@@ -265,7 +265,7 @@ void QLoggingSettingsParser::parseNextLi
+ QLoggingRegistry::QLoggingRegistry()
+     : categoryFilter(defaultCategoryFilter)
+ {
+-#if defined(Q_OS_ANDROID)
++#if defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED)
+     // Unless QCoreApplication has been constructed we can't be sure that
+     // we are on Qt's main thread. If we did allow logging here, we would
+     // potentially set Qt's main thread to Android's thread 0, which would
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/io/qsavefile.cpp qtbase-everywhere-opensource-src-5.15.3/src/corelib/io/qsavefile.cpp
+--- qtbase-everywhere-src-5.15.3/src/corelib/io/qsavefile.cpp	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/io/qsavefile.cpp	2022-04-18 14:36:08.776277342 +0800
+@@ -247,7 +247,7 @@ bool QSaveFile::open(OpenMode mode)
+ #ifdef Q_OS_WIN
+     // check if it is an Alternate Data Stream
+     requiresDirectWrite = d->finalFileName == d->fileName && d->fileName.indexOf(QLatin1Char(':'), 2) > 1;
+-#elif defined(Q_OS_ANDROID)
++#elif defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED)
+     // check if it is a content:// URL
+     requiresDirectWrite  = d->fileName.startsWith(QLatin1String("content://"));
+ #endif
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/kernel/kernel.pri qtbase-everywhere-opensource-src-5.15.3/src/corelib/kernel/kernel.pri
+--- qtbase-everywhere-src-5.15.3/src/corelib/kernel/kernel.pri	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/kernel/kernel.pri	2022-04-18 14:36:08.782944056 +0800
+@@ -167,7 +167,7 @@ unix|integrity {
+ 
+     qtConfig(clock-gettime): QMAKE_USE_PRIVATE += librt
+ 
+-    !android {
++    !android | android-embedded{
+         SOURCES += kernel/qsharedmemory_posix.cpp \
+                    kernel/qsharedmemory_systemv.cpp \
+                    kernel/qsharedmemory_unix.cpp \
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/kernel/qsystemsemaphore_systemv.cpp qtbase-everywhere-opensource-src-5.15.3/src/corelib/kernel/qsystemsemaphore_systemv.cpp
+--- qtbase-everywhere-src-5.15.3/src/corelib/kernel/qsystemsemaphore_systemv.cpp	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/kernel/qsystemsemaphore_systemv.cpp	2022-04-18 14:36:08.789610770 +0800
+@@ -102,7 +102,7 @@ key_t QSystemSemaphorePrivate::handle(QS
+     }
+     createdFile = (1 == built);
+ 
+-#if !defined(QT_NO_SHAREDMEMORY) && !defined(QT_POSIX_IPC) && !defined(Q_OS_ANDROID)
++#if !defined(QT_NO_SHAREDMEMORY) && !defined(QT_POSIX_IPC) && (!defined(Q_OS_ANDROID) || defined(Q_OS_ANDROID_EMBEDDED))
+     // Get the unix key for the created file
+     unix_key = ftok(QFile::encodeName(fileName).constData(), 'Q');
+ #endif
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/mimetypes/mimetypes.pri qtbase-everywhere-opensource-src-5.15.3/src/corelib/mimetypes/mimetypes.pri
+--- qtbase-everywhere-src-5.15.3/src/corelib/mimetypes/mimetypes.pri	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/mimetypes/mimetypes.pri	2022-04-18 14:36:08.796277484 +0800
+@@ -26,7 +26,7 @@ qtConfig(mimetype) {
+ 
+     qtConfig(mimetype-database) {
+         outpath = .rcc
+-        android {
++        android:!android-embedded {
+             outpath = $$outpath/$${QT_ARCH}
+         }
+         debug_and_release {
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/plugin/qfactoryloader.cpp qtbase-everywhere-opensource-src-5.15.3/src/corelib/plugin/qfactoryloader.cpp
+--- qtbase-everywhere-src-5.15.3/src/corelib/plugin/qfactoryloader.cpp	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/plugin/qfactoryloader.cpp	2022-04-18 14:36:08.796277484 +0800
+@@ -196,7 +196,7 @@ void QFactoryLoader::update()
+             continue;
+         d->loadedPaths << pluginDir;
+ 
+-#ifdef Q_OS_ANDROID
++#if defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED)
+         QString path = pluginDir;
+ #else
+         QString path = pluginDir + d->suffix;
+@@ -210,11 +210,11 @@ void QFactoryLoader::update()
+ 
+         QStringList plugins = QDir(path).entryList(
+ #if defined(Q_OS_WIN)
+-                    QStringList(QStringLiteral("*.dll")),
+-#elif defined(Q_OS_ANDROID)
+-                    QStringList(QLatin1String("libplugins_%1_*.so").arg(d->suffix)),
++            QStringList(QStringLiteral("*.dll")),
++#elif defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED)
++            QStringList(QLatin1String("libplugins_%1_*.so").arg(d->suffix)),
+ #endif
+-                    QDir::Files);
++            QDir::Files);
+         QLibraryPrivate *library = nullptr;
+ 
+         for (int j = 0; j < plugins.count(); ++j) {
+@@ -349,7 +349,7 @@ QFactoryLoader::QFactoryLoader(const cha
+ #if QT_CONFIG(library)
+     d->cs = cs;
+     d->suffix = suffix;
+-# ifdef Q_OS_ANDROID
++#if defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED)
+     if (!d->suffix.isEmpty() && d->suffix.at(0) == QLatin1Char('/'))
+         d->suffix.remove(0, 1);
+ # endif
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/plugin/qlibrary_unix.cpp qtbase-everywhere-opensource-src-5.15.3/src/corelib/plugin/qlibrary_unix.cpp
+--- qtbase-everywhere-src-5.15.3/src/corelib/plugin/qlibrary_unix.cpp	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/plugin/qlibrary_unix.cpp	2022-04-18 14:36:08.796277484 +0800
+@@ -52,7 +52,7 @@
+ #  include <private/qcore_mac_p.h>
+ #endif
+ 
+-#ifdef Q_OS_ANDROID
++#if defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED)
+ #  include <private/qjnihelpers_p.h>
+ #endif
+ 
+@@ -100,7 +100,7 @@ QStringList QLibraryPrivate::suffixes_sy
+         suffixes << QLatin1String(".so.%1").arg(fullVersion);
+     } else {
+         suffixes << QLatin1String(".so");
+-# ifdef Q_OS_ANDROID
++#if defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED)
+         suffixes << QStringLiteral(LIBS_SUFFIX);
+ # endif
+     }
+@@ -167,7 +167,7 @@ bool QLibraryPrivate::load_sys()
+     // library is reloaded with dlopen() at a later time.
+ #if defined(RTLD_NODELETE)
+     if (loadHints & QLibrary::PreventUnloadHint) {
+-#   ifdef Q_OS_ANDROID // RTLD_NODELETE flag is supported by Android 23+
++#if defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED) // RTLD_NODELETE flag is supported by Android 23+
+         if (QtAndroidPrivate::androidSdkVersion() > 22)
+ #   endif
+             dlFlags |= RTLD_NODELETE;
+@@ -236,7 +236,7 @@ bool QLibraryPrivate::load_sys()
+             }
+ 
+             hnd = dlopen(QFile::encodeName(attempt), dlFlags);
+-#ifdef Q_OS_ANDROID
++#if defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED)
+             if (!hnd) {
+                 auto attemptFromBundle = attempt;
+                 hnd = dlopen(QFile::encodeName(attemptFromBundle.replace(QLatin1Char('/'), QLatin1Char('_'))), dlFlags);
+diff -uprN qtbase-everywhere-src-5.15.3/src/corelib/plugin/qpluginloader.cpp qtbase-everywhere-opensource-src-5.15.3/src/corelib/plugin/qpluginloader.cpp
+--- qtbase-everywhere-src-5.15.3/src/corelib/plugin/qpluginloader.cpp	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/corelib/plugin/qpluginloader.cpp	2022-04-18 14:36:08.799610841 +0800
+@@ -308,7 +308,7 @@ static QString locatePlugin(const QStrin
+     for (const QString &path : qAsConst(paths)) {
+         for (const QString &prefix : qAsConst(prefixes)) {
+             for (const QString &suffix : qAsConst(suffixes)) {
+-#ifdef Q_OS_ANDROID
++#if defined(Q_OS_ANDROID) && !defined(Q_OS_ANDROID_EMBEDDED)
+                 {
+                     QString pluginPath = basePath + prefix + baseName + suffix;
+                     const QString fn = path + QLatin1String("/lib") + pluginPath.replace(QLatin1Char('/'), QLatin1Char('_'));
+diff -uprN qtbase-everywhere-src-5.15.3/src/gui/configure.json qtbase-everywhere-opensource-src-5.15.3/src/gui/configure.json
+--- qtbase-everywhere-src-5.15.3/src/gui/configure.json	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/gui/configure.json	2022-04-18 14:36:08.829611055 +0800
+@@ -1388,7 +1388,7 @@
+         "eglfs": {
+             "label": "EGLFS",
+             "section": "Platform plugins",
+-            "condition": "!config.android && !config.darwin && !config.win32 && !config.wasm && features.egl",
++            "condition": "(!config.android || config.android-embedded) && !config.darwin && !config.win32 && !config.wasm && features.egl",
+             "output": [ "privateFeature" ]
+         },
+         "eglfs_brcm": {
+@@ -1436,6 +1436,11 @@
+             "condition": "config.integrity && features.eglfs && tests.egl-openwfd",
+             "output": [ "privateFeature" ]
+         },
++        "eglfs_sffg": {
++            "label": "EGLFS SFFG",
++            "condition": "config.android && config.android-embedded && features.eglfs",
++            "output": [ "privateFeature" ]
++        },
+         "eglfs_x11": {
+             "label": "EGLFS X11",
+             "condition": "features.eglfs && features.xcb-xlib && features.egl_x11",
+@@ -1968,7 +1973,7 @@ QMAKE_LIBDIR_OPENGL[_ES2] and QMAKE_LIBS
+                     "section": "EGLFS details",
+                     "condition": "features.eglfs",
+                     "entries": [
+-                        "eglfs_openwfd", "eglfs_viv", "eglfs_viv_wl", "eglfs_rcar", "eglfs_egldevice", "eglfs_gbm", "eglfs_vsp2", "eglfs_mali", "eglfs_brcm", "eglfs_x11"
++                        "eglfs_sffg", "eglfs_openwfd", "eglfs_viv", "eglfs_viv_wl", "eglfs_rcar", "eglfs_egldevice", "eglfs_gbm", "eglfs_vsp2", "eglfs_mali", "eglfs_brcm", "eglfs_x11"
+                     ]
+                 },
+                 "linuxfb", "vnc",
+diff -uprN qtbase-everywhere-src-5.15.3/src/network/configure.json qtbase-everywhere-opensource-src-5.15.3/src/network/configure.json
+--- qtbase-everywhere-src-5.15.3/src/network/configure.json	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/network/configure.json	2022-04-20 20:24:08.492324663 +0800
+@@ -95,7 +95,7 @@
+                 },
+                 {
+                     "libs": "-lssl_arm64-v8a -lcrypto_arm64-v8a",
+-                    "condition": "config.android"
++                    "condition": "config.android && !config.android-embedded"
+                 },
+                 {
+                     "libs": "-lssl -lcrypto",
+diff -uprN qtbase-everywhere-src-5.15.3/src/network/kernel/kernel.pri qtbase-everywhere-opensource-src-5.15.3/src/network/kernel/kernel.pri
+--- qtbase-everywhere-src-5.15.3/src/network/kernel/kernel.pri	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/network/kernel/kernel.pri	2022-04-18 14:36:08.902944909 +0800
+@@ -92,8 +92,8 @@ else: qtConfig(libproxy) {
+     SOURCES += kernel/qnetworkproxy_libproxy.cpp
+     QMAKE_USE_PRIVATE += libproxy libdl
+ }
+-else:android: SOURCES += kernel/qnetworkproxy_android.cpp
++else:android:!android-embedded: SOURCES += kernel/qnetworkproxy_android.cpp
+ else: SOURCES += kernel/qnetworkproxy_generic.cpp
+ 
+-android: ANDROID_BUNDLED_JAR_DEPENDENCIES = \
++android:!android-embedded: ANDROID_BUNDLED_JAR_DEPENDENCIES = \
+         jar/QtAndroidNetwork.jar
+diff -uprN qtbase-everywhere-src-5.15.3/src/network/ssl/ssl.pri qtbase-everywhere-opensource-src-5.15.3/src/network/ssl/ssl.pri
+--- qtbase-everywhere-src-5.15.3/src/network/ssl/ssl.pri	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/network/ssl/ssl.pri	2022-04-18 14:36:08.909611623 +0800
+@@ -116,7 +116,7 @@ qtConfig(ssl) {
+         #   - configure: -openssl -openssl-linked -I <OPENSSL_DIR>\include -L <OPENSSL_DIR>\lib\VC\static OPENSSL_LIBS="-lUser32 -lAdvapi32 -lGdi32" OPENSSL_LIBS_DEBUG="-lssleay32MDd -llibeay32MDd" OPENSSL_LIBS_RELEASE="-lssleay32MD -llibeay32MD"
+ 
+         qtConfig(openssl-linked): {
+-            android {
++            android:!android-embedded {
+                 build_pass|single_android_abi: LIBS_PRIVATE += -lssl_$${QT_ARCH} -lcrypto_$${QT_ARCH}
+             } else: QMAKE_USE_FOR_PRIVATE += openssl
+         } else: \
+diff -uprN qtbase-everywhere-src-5.15.3/src/plugins/bearer/bearer.pro qtbase-everywhere-opensource-src-5.15.3/src/plugins/bearer/bearer.pro
+--- qtbase-everywhere-src-5.15.3/src/plugins/bearer/bearer.pro	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/plugins/bearer/bearer.pro	2022-04-18 14:36:08.929611765 +0800
+@@ -1,7 +1,7 @@
+ TEMPLATE = subdirs
+ QT_FOR_CONFIG += network-private
+ 
+-!android:linux*:qtHaveModule(dbus) {
++!android:linux*:qtHaveModule(dbus) | android-embedded:qtHaveModule(dbus) {
+     SUBDIRS += generic
+     SUBDIRS += connman networkmanager
+ }
+diff -uprN qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/deviceintegration.pro qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/deviceintegration.pro
+--- qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/deviceintegration.pro	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/deviceintegration.pro	2022-04-18 14:36:08.942945194 +0800
+@@ -11,6 +11,7 @@ qtConfig(eglfs_viv): SUBDIRS += eglfs_vi
+ qtConfig(eglfs_rcar): SUBDIRS += eglfs_rcar
+ qtConfig(eglfs_viv_wl): SUBDIRS += eglfs_viv_wl
+ qtConfig(eglfs_openwfd): SUBDIRS += eglfs_openwfd
++qtConfig(eglfs_sffg): SUBDIRS += eglfs_sffg
+ qtConfig(opengl): SUBDIRS += eglfs_emu
+ 
+ eglfs_kms_egldevice.depends = eglfs_kms_support
+diff -uprN qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/eglfs_sffg.json qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/eglfs_sffg.json
+--- qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/eglfs_sffg.json	1970-01-01 08:00:00.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/eglfs_sffg.json	2022-04-18 14:36:08.946278551 +0800
+@@ -0,0 +1,3 @@
++{
++    "Keys": [ "eglfs_sffg" ]
++}
+diff -uprN qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/eglfs_sffg.pro qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/eglfs_sffg.pro
+--- qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/eglfs_sffg.pro	1970-01-01 08:00:00.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/eglfs_sffg.pro	2022-04-18 14:36:08.946278551 +0800
+@@ -0,0 +1,17 @@
++TARGET = qeglfs-sffg-integration
++
++QT += core-private gui-private eglfsdeviceintegration-private
++
++INCLUDEPATH += $$PWD/../../api
++CONFIG += egl
++
++SOURCES += $$PWD/qeglfssffgmain.cpp \
++           $$PWD/qeglfssffgintegration.cpp
++
++HEADERS += $$PWD/qeglfssffgintegration.h
++
++OTHER_FILES += $$PWD/eglfs_sffg.json
++
++PLUGIN_TYPE = egldeviceintegrations
++PLUGIN_CLASS_NAME = QEglFSSffgIntegrationPlugin
++load(qt_plugin)
+diff -uprN qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgintegration.cpp qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgintegration.cpp
+--- qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgintegration.cpp	1970-01-01 08:00:00.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgintegration.cpp	2022-04-25 15:54:13.654710387 +0800
+@@ -0,0 +1,127 @@
++/*********************************************************************************
++ *Copyright(C): Juntuan.Lu, 2020-2030, All rights reserved.
++ *Author:  Juntuan.Lu
++ *Version: 1.0
++ *Date:  2021/11/29
++ *Email: 931852884@qq.com
++ *Description:
++ *Others:
++ *Function List:
++ *History:
++ **********************************************************************************/
++
++#include "qeglfssffgintegration.h"
++#include <QDebug>
++#include <QLibrary>
++
++#define SFFG_LIBRARY_PATH "sffg"
++#define SFFG_DISPLAY_SCREEN 0
++#define SFFG_DISPLAY_STACK 0
++#define SFFG_DISPLAY_INDEX 0x50000000
++#define SFFG_OK 0
++#define SFFG_ERROR 1
++
++QT_BEGIN_NAMESPACE
++
++void QEglFSSffgIntegration::platformInit()
++{
++    // load plugin
++    QLibrary sffgLib;
++    QByteArray sffgLibPath = qgetenv("QT_SFFG_LIBRARY_PATH");
++    if (sffgLibPath.isEmpty()) {
++        sffgLib.setFileName(SFFG_LIBRARY_PATH);
++    } else {
++        sffgLib.setFileName(sffgLibPath);
++    }
++    if (!sffgLib.load()) {
++        qFatal("Failed to load sffg plugin");
++    }
++    m_sffgInitFunction = (SffgInitFunction)sffgLib.resolve("sffg_init");
++    m_sffgCreateFunction = (SffgCreateFunction)sffgLib.resolve("sffg_create");
++    m_sffgDestroyFunction = (SffgDestroyFunction)sffgLib.resolve("sffg_destroy");
++    if (!m_sffgInitFunction) {
++        qFatal("Failed to load sffg_init");
++    }
++    if (!m_sffgCreateFunction) {
++        qFatal("Failed to load sffg_create");
++    }
++    if (!m_sffgDestroyFunction) {
++        qFatal("Failed to load sffg_destroy");
++    }
++    // sffg_init
++    int32_t displayScreen = SFFG_DISPLAY_SCREEN;
++    bool ok = false;
++    int32_t displayScreenEnv = (int32_t)qEnvironmentVariableIntValue("QT_SFFG_DISPLAY_SCREEN", &ok);
++    if (ok && displayScreenEnv >= 0) {
++        displayScreen = displayScreenEnv;
++    }
++    int32_t width = 0;
++    int32_t height = 0;
++    if (m_sffgInitFunction(displayScreen, &width, &height) != SFFG_OK) {
++        qFatal("Failed to invoke sffg_init");
++    }
++    m_screenSize = QSize(width, height);
++    qInfo() << "Invake sffg_init successfully";
++    qInfo() << "Screen size:" << m_screenSize;
++}
++
++QSize QEglFSSffgIntegration::screenSize() const
++{
++    return m_screenSize;
++}
++
++int QEglFSSffgIntegration::screenDepth() const
++{
++    return 32;
++}
++
++QImage::Format QEglFSSffgIntegration::screenFormat() const
++{
++    return QImage::Format_RGBA8888;
++}
++
++EGLNativeWindowType QEglFSSffgIntegration::createNativeWindow(QPlatformWindow* window, const QSize& size, const QSurfaceFormat& format)
++{
++    // sffg_create
++    Q_UNUSED(window);
++    Q_UNUSED(format);
++    Q_UNUSED(size);
++    int32_t displayStack = SFFG_DISPLAY_STACK;
++    int32_t displayIndex = SFFG_DISPLAY_INDEX;
++    bool ok = false;
++    int32_t displayStackEnv = (int32_t)qEnvironmentVariableIntValue("QT_SFFG_DISPLAY_STACK", &ok);
++    if (ok && displayStackEnv >= 0) {
++        displayStack = displayStackEnv;
++    }
++    int32_t displayIndexEnv = (int32_t)qEnvironmentVariableIntValue("QT_SFFG_DISPLAY_INDEX", &ok);
++    if (ok && displayIndexEnv >= 0) {
++        displayIndex = displayIndexEnv;
++    }
++    EGLNativeWindowType nativeWindow = 0;
++    if (m_sffgCreateFunction(displayStack, displayIndex, &nativeWindow) != SFFG_OK) {
++        qFatal("Failed to invoke sffg_create");
++    }
++    qInfo() << "Invake sffg_create successfully";
++    return nativeWindow;
++}
++
++QSurfaceFormat QEglFSSffgIntegration::surfaceFormatFor(const QSurfaceFormat& inputFormat) const
++{
++    QSurfaceFormat format = inputFormat;
++    format.setRedBufferSize(8);
++    format.setGreenBufferSize(8);
++    format.setBlueBufferSize(8);
++    format.setAlphaBufferSize(8);
++    return format;
++}
++
++void QEglFSSffgIntegration::destroyNativeWindow(EGLNativeWindowType window)
++{
++    // sffg_destroy
++    if (m_sffgDestroyFunction(window) != SFFG_OK) {
++        qFatal("Failed to invoke sffg_destroy");
++    }
++    qInfo() << "Invake sffg_destroy successfully";
++}
++
++QT_END_NAMESPACE
+diff -uprN qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgintegration.h qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgintegration.h
+--- qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgintegration.h	1970-01-01 08:00:00.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgintegration.h	2022-04-25 15:52:29.893286043 +0800
+@@ -0,0 +1,45 @@
++/*********************************************************************************
++ *Copyright(C): Juntuan.Lu, 2020-2030, All rights reserved.
++ *Author:  Juntuan.Lu
++ *Version: 1.0
++ *Date:  2021/11/29
++ *Email: 931852884@qq.com
++ *Description:
++ *Others:
++ *Function List:
++ *History:
++ **********************************************************************************/
++
++#ifndef QEGLFSSFFGINTEGRATION_H
++#define QEGLFSSFFGINTEGRATION_H
++
++#include "private/qeglfsdeviceintegration_p.h"
++
++QT_BEGIN_NAMESPACE
++
++class QEglFSSffgIntegration : public QEglFSDeviceIntegration
++{
++    using QEglFSDeviceIntegration::QEglFSDeviceIntegration;
++    typedef int (*SffgInitFunction)(int32_t display_screen, int32_t* display_width, int32_t* display_height);
++    typedef int (*SffgCreateFunction)(int32_t display_stack, int32_t display_index, EGLNativeWindowType* native_window);
++    typedef int (*SffgDestroyFunction)(EGLNativeWindowType native_window);
++
++public:
++    virtual void platformInit() override;
++    virtual QSize screenSize() const override;
++    virtual int screenDepth() const override;
++    virtual QImage::Format screenFormat() const override;
++    virtual EGLNativeWindowType createNativeWindow(QPlatformWindow* window, const QSize& size, const QSurfaceFormat& format) override;
++    virtual void destroyNativeWindow(EGLNativeWindowType window) override;
++    virtual QSurfaceFormat surfaceFormatFor(const QSurfaceFormat& inputFormat) const override;
++
++private:
++    QSize m_screenSize;
++    SffgInitFunction m_sffgInitFunction = nullptr;
++    SffgCreateFunction m_sffgCreateFunction = nullptr;
++    SffgDestroyFunction m_sffgDestroyFunction = nullptr;
++};
++
++QT_END_NAMESPACE
++
++#endif //QEGLFSSFFGINTEGRATION_H
+diff -uprN qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgmain.cpp qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgmain.cpp
+--- qtbase-everywhere-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgmain.cpp	1970-01-01 08:00:00.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/eglfs/deviceintegration/eglfs_sffg/qeglfssffgmain.cpp	2022-04-18 14:36:08.946278551 +0800
+@@ -0,0 +1,31 @@
++/*********************************************************************************
++ *Copyright(C): Juntuan.Lu, 2020-2030, All rights reserved.
++ *Author:  Juntuan.Lu
++ *Version: 1.0
++ *Date:  2021/11/29
++ *Email: 931852884@qq.com
++ *Description:
++ *Others:
++ *Function List:
++ *History:
++ **********************************************************************************/
++
++#include "private/qeglfsdeviceintegration_p.h"
++#include "qeglfssffgintegration.h"
++
++QT_BEGIN_NAMESPACE
++
++class QEglFSSffgIntegrationPlugin : public QEglFSDeviceIntegrationPlugin
++{
++    Q_OBJECT
++    Q_PLUGIN_METADATA(IID QEglFSDeviceIntegrationFactoryInterface_iid FILE "eglfs_sffg.json")
++
++public:
++    QEglFSDeviceIntegration *create() override {
++        return new QEglFSSffgIntegration;
++    }
++};
++
++QT_END_NAMESPACE
++
++#include "qeglfssffgmain.moc"
+diff -uprN qtbase-everywhere-src-5.15.3/src/plugins/platforms/platforms.pro qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/platforms.pro
+--- qtbase-everywhere-src-5.15.3/src/plugins/platforms/platforms.pro	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/plugins/platforms/platforms.pro	2022-04-18 14:36:08.952945265 +0800
+@@ -3,9 +3,9 @@ QT_FOR_CONFIG += gui-private
+ 
+ android:!android-embedded: SUBDIRS += android
+ 
+-!wasm:!android: SUBDIRS += minimal
++!wasm:!android | android-embedded: SUBDIRS += minimal
+ 
+-!wasm:!android:qtConfig(freetype): SUBDIRS += offscreen
++!wasm:!android:qtConfig(freetype) | android-embedded:qtConfig(freetype): SUBDIRS += offscreen
+ 
+ qtConfig(xcb) {
+     SUBDIRS += xcb
+diff -uprN qtbase-everywhere-src-5.15.3/src/plugins/plugins.pro qtbase-everywhere-opensource-src-5.15.3/src/plugins/plugins.pro
+--- qtbase-everywhere-src-5.15.3/src/plugins/plugins.pro	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/plugins/plugins.pro	2022-04-18 14:36:08.972945407 +0800
+@@ -6,7 +6,7 @@ qtHaveModule(network):qtConfig(bearerman
+ qtHaveModule(gui) {
+     SUBDIRS *= platforms platforminputcontexts platformthemes
+     qtConfig(imageformatplugin): SUBDIRS *= imageformats
+-    !android:qtConfig(library): SUBDIRS *= generic
++    !android:qtConfig(library) | android-embedded:qtConfig(library): SUBDIRS *= generic
+ }
+ qtHaveModule(widgets): SUBDIRS += styles
+ 
+diff -uprN qtbase-everywhere-src-5.15.3/src/src.pro qtbase-everywhere-opensource-src-5.15.3/src/src.pro
+--- qtbase-everywhere-src-5.15.3/src/src.pro	2021-03-18 23:29:29.000000000 +0800
++++ qtbase-everywhere-opensource-src-5.15.3/src/src.pro	2022-04-18 14:36:08.986278835 +0800
+@@ -171,7 +171,7 @@ win32:SUBDIRS += src_winmain
+ qtConfig(network) {
+     SUBDIRS += src_network
+     src_plugins.depends += src_network
+-    android: SUBDIRS += network/android/jar
++    android:!android-embedded: SUBDIRS += network/android/jar
+ }
+ qtConfig(sql) {
+     SUBDIRS += src_sql
+@@ -190,7 +190,7 @@ qtConfig(dbus) {
+     src_plugins.depends += src_dbus src_tools_qdbusxml2cpp src_tools_qdbuscpp2xml
+ }
+ 
+-android {
++android:!android-embedded {
+     SUBDIRS += src_tools_androiddeployqt \
+                src_tools_androidtestrunner
+     TOOLS += src_tools_androiddeployqt \

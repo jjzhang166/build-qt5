@@ -1,0 +1,5 @@
+#qtbase options
+-qt-zlib
+-qt-libpng
+-qt-libjpeg
+-qt-freetype

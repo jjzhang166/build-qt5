@@ -1,0 +1,39 @@
+/*********************************************************************************
+ *Copyright(C): Juntuan.Lu, 2020-2030, All rights reserved.
+ *Author:  Juntuan.Lu
+ *Version: 1.0
+ *Date:  2021/11/29
+ *Email: 931852884@qq.com
+ *Description:
+ *Others:
+ *Function List:
+ *History:
+ **********************************************************************************/
+
+cc_defaults {
+    name: "libsffg_default",
+    cppflags: [
+        "-Wall",
+        "-Werror",
+        "-Wunused",
+        "-Wunreachable-code",
+        "-Wno-unused-parameter",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder",
+        "liblog",
+        "libutils",
+    ],
+}
+cc_library_shared {
+    name: "libsffg",
+    defaults: ["libsffg_default"],
+    srcs: ["libsffg.cpp"],
+    shared_libs: [
+        "libui",
+        "libgui",
+        "libEGL",
+    ],
+    //cppflags: ["-DOPENGL_USE_HOST"],
+}

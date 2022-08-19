@@ -1,0 +1,120 @@
+#*********************************************************************************
+#  *Copyright(C): Juntuan.Lu, 2020-2030, All rights reserved.
+#  *Author:  Juntuan.Lu
+#  *Version: 1.0
+#  *Date:  2021/11/29
+#  *Email: 931852884@qq.com
+#  *Description:
+#  *Others:
+#  *Function List:
+#  *History:
+#**********************************************************************************
+
+### --->>> Config Android
+if(NOT DEFINED ENV{NDK_LLVM_PATH})
+    message(FATAL_ERROR "You need to set the NDK_LLVM_PATH environment.")
+endif()
+set(NDK_LLVM_PATH $ENV{NDK_LLVM_PATH})
+set(ANDROID_TOOLCHAIN_NAME "aarch64-linux-android")
+set(ANDROID_PLATFORM_LEVEL "29")
+set(ANDROID_MAIN_FLAGS "-target ${ANDROID_TOOLCHAIN_NAME}${ANDROID_PLATFORM_LEVEL}")
+set(ANDROID_COMPILER_FLAGS "${ANDROID_MAIN_FLAGS}")
+list(APPEND ANDROID_COMPILER_FLAGS
+    -D_REENTRANT
+    -fstack-protector-strong
+    -fno-limit-debug-info
+    -Wno-attributes
+    -Wno-error=deprecated-declarations
+)
+if(ANDROID)
+    list(APPEND ANDROID_COMPILER_FLAGS
+        -DANDROID
+        -DANDROID_EMBEDDED
+    )
+endif()
+string(REPLACE ";" " " ANDROID_COMPILER_FLAGS "${ANDROID_COMPILER_FLAGS}")
+set(ANDROID_C_FLAGS "${ANDROID_COMPILER_FLAGS}")
+set(ANDROID_CXX_FLAGS "${ANDROID_COMPILER_FLAGS}")
+set(ANDROID_LINKER_FLAGS)
+list(APPEND ANDROID_LINKER_FLAGS
+    #-fuse-ld=bfd
+    #-static-libstdc++
+    #-Wl,--no-undefined
+    -Wl,--build-id=sha1
+    -Qunused-arguments
+)
+if(DEFINED ENV{BUILD_TARGET_PREFIX})
+    list(APPEND ANDROID_LINKER_FLAGS
+        -I$ENV{BUILD_TARGET_PREFIX}/include
+        -L$ENV{BUILD_TARGET_PREFIX}/lib
+    )
+elseif(DEFINED ENV{TARGET_SYSROOT})
+    list(APPEND ANDROID_LINKER_FLAGS
+        -I$ENV{TARGET_SYSROOT}/usr/include
+        -L$ENV{TARGET_SYSROOT}/usr/lib
+    )
+endif()
+string(REPLACE ";" " " ANDROID_LINKER_FLAGS "${ANDROID_LINKER_FLAGS}")
+set(ANDROID_LINKER_FLAGS_EXE)
+list(APPEND ANDROID_LINKER_FLAGS_EXE
+    -Wl,--gc-sections
+)
+string(REPLACE ";" " " ANDROID_LINKER_FLAGS_EXE "${ANDROID_LINKER_FLAGS_EXE}")
+
+### --->>> Config CMake
+set(UNIX TRUE)
+if(ANDROID)
+    set(ANDROID_EMBEDDED TRUE)
+    set(CMAKE_SYSTEM_NAME "Android")
+    set(CMAKE_SYSTEM_VERSION 1)
+    set(CMAKE_SYSTEM_PROCESSOR "arm64-v8a")
+else()
+    set(CMAKE_SYSTEM_NAME "Linux")
+    set(CMAKE_SYSTEM_PROCESSOR "aarch64")
+endif()
+set(CMAKE_C_COMPILER "${NDK_LLVM_PATH}/bin/clang")
+set(CMAKE_CXX_COMPILER "${NDK_LLVM_PATH}/bin/clang++")
+set(CMAKE_AR "${NDK_LLVM_PATH}/bin/llvm-ar")
+set(CMAKE_RANLIB "${NDK_LLVM_PATH}/bin/llvm-ranlib")
+set(CMAKE_OBJCOPY "${NDK_LLVM_PATH}/bin/llvm-objcopy")
+set(CMAKE_OBJDUMP "${NDK_LLVM_PATH}/bin/llvm-objdump")
+set(CMAKE_NM "${NDK_LLVM_PATH}/bin/llvm-nm")
+set(CMAKE_AS "${NDK_LLVM_PATH}/bin/llvm-as")
+set(CMAKE_STRIP "${NDK_LLVM_PATH}/bin/llvm-strip")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ANDROID_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ANDROID_CXX_FLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${ANDROID_LINKER_FLAGS}")
+set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${ANDROID_LINKER_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ANDROID_LINKER_FLAGS} ${ANDROID_LINKER_FLAGS_EXE}")
+set(CMAKE_SYSROOT "${NDK_LLVM_PATH}/sysroot")
+set(CMAKE_FIND_ROOT_PATH "${CMAKE_SYSROOT}/usr")
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+set(CMAKE_LIBRARY_ARCHITECTURE "${ANDROID_TOOLCHAIN_NAME}")
+set(CMAKE_SYSTEM_LIBRARY_PATH "/usr/lib/${ANDROID_TOOLCHAIN_NAME}/${ANDROID_PLATFORM_LEVEL}")
+set(CMAKE_C_STANDARD_LIBRARIES_INIT "-latomic -llog -lz -lm -ldl -lc")
+set(CMAKE_CXX_STANDARD_LIBRARIES_INIT "${CMAKE_C_STANDARD_LIBRARIES_INIT} -lc++abi")
+if(DEFINED ENV{BUILD_TARGET_PREFIX})
+    set(CMAKE_FIND_ROOT_PATH "$ENV{BUILD_TARGET_PREFIX};${CMAKE_FIND_ROOT_PATH}")
+elseif(DEFINED ENV{TARGET_SYSROOT})
+    set(CMAKE_FIND_ROOT_PATH "$ENV{TARGET_SYSROOT}/usr;${CMAKE_FIND_ROOT_PATH}")
+endif()
+
+### --->>> Config Qt5
+if(DEFINED ENV{QT_QMAKE_EXECUTABLE} AND EXISTS $ENV{QT_QMAKE_EXECUTABLE})
+    set(QT_QMAKE_EXECUTABLE "$ENV{QT_QMAKE_EXECUTABLE}")
+    execute_process(COMMAND ${QT_QMAKE_EXECUTABLE} -query QT_INSTALL_PREFIX OUTPUT_VARIABLE QT_INSTALL_PREFIX)
+    execute_process(COMMAND ${QT_QMAKE_EXECUTABLE} -query QT_HOST_PREFIX OUTPUT_VARIABLE QT_HOST_PREFIX)
+    string(REPLACE "\n" "" QT_INSTALL_PREFIX "${QT_INSTALL_PREFIX}")
+    string(REPLACE "\n" "" QT_HOST_PREFIX "${QT_HOST_PREFIX}")
+    if(NOT QT_INSTALL_PREFIX)
+        message(FATAL_ERROR "QT_INSTALL_PREFIX is empty")
+    endif()
+    if(NOT QT_HOST_PREFIX)
+        message(FATAL_ERROR "QT_HOST_PREFIX is empty")
+    endif()
+    set(CMAKE_FIND_ROOT_PATH "${QT_INSTALL_PREFIX};${CMAKE_FIND_ROOT_PATH}")
+    set(OE_QMAKE_PATH_EXTERNAL_HOST_BINS "${QT_HOST_PREFIX}/bin")
+endif()

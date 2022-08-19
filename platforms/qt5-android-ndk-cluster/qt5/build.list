@@ -1,0 +1,9 @@
+#buildlist
+qtbase
+qtsvg
+qtdeclarative
+qtgraphicaleffects
+qtquickcontrols
+qtquickcontrols2
+qtquick3d
+qtremoteobjects

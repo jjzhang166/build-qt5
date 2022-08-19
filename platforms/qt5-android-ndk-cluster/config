@@ -1,0 +1,68 @@
+#!/bin/bash
+########################
+#生成patch：diff -uprN [dir] [dir_new] > xxx.patch
+########################
+
+#编译器类型(lib or lib64)
+TARGET_LIB_NAME=lib64
+#CMAKE下载地址
+CMAKE_DOWNLOAD_URL="https://github.com/Kitware/CMake/releases/download/v3.23.1/cmake-3.23.1-linux-x86_64.sh"
+#CMAKE MD5
+CMAKE_DOWNLOAD_MD5="3657081b57bedf522a5a902713084854"
+#QT下载地址前缀
+QT_DOWNLOAD_URL_PRE="https://mirrors.ustc.edu.cn/qtproject/official_releases/qt/5.15/5.15.3/submodules"
+#QT下载地址后缀
+QT_DOWNLOAD_URL_POST="-everywhere-opensource-src-5.15.3.tar.xz"
+#Qt通用编译配置
+QT_CONFIG_COMMON="-shared -make libs -release"
+#Qt编译平台(例如：-device、-xplatform)
+QT_CONFIG_PLATFORM="-xplatform android-embedded-clang"
+#Qt额外配置(例如：-device-option)
+QT_CONFIG_OPTION=""
+#Qt编译examples/tests/tools
+QT_BUILD_OTHER=0
+
+
+#环境变量
+export PKG_CONFIG_SYSROOT_DIR=$BUILD_SDK_DIR/target
+export PKG_CONFIG_LIBDIR=$PKG_CONFIG_SYSROOT_DIR/usr/lib/pkgconfig
+export ANDROID_NDK_NAME="android-ndk-r22b"
+export ANDROID_NDK_ROOT="$BUILD_DIR/toolchain/$ANDROID_NDK_NAME"
+export NDK_LLVM_PATH="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64"
+export STRIP_EXECUTABLE="$NDK_LLVM_PATH/bin/llvm-strip"
+
+
+#Qt运行时库的安装路径
+QT_RUNTIME_PREFIX_PATH="/containerfs/qt"
+#Qt编译时的qt.conf增量配置
+QT_SDK_CONFIGSTR_ADD=""
+#Qt运行时的qt.conf增量配置
+QT_RUNTIME_CONFIGSTR_ADD=""
+#Qt编译时的environment-setup增量配置
+QT_SDK_ENV_CONFIGSTR_ADD="\
+[ -z \$PKG_CONFIG_SYSROOT_DIR ] && export PKG_CONFIG_SYSROOT_DIR=\$CURRENT_DIR/target\n\
+[ -z \$PKG_CONFIG_LIBDIR ] && export PKG_CONFIG_LIBDIR=\$PKG_CONFIG_SYSROOT_DIR/usr/lib/pkgconfig\n\
+[ -z \$NDK_LLVM_PATH ] && export NDK_LLVM_PATH=$NDK_LLVM_PATH\n\
+\n\
+echo -e \"NDK_LLVM_PATH=\$NDK_LLVM_PATH, you can set environment to change it.\"\n\
+[ ! -d \$NDK_LLVM_PATH ] && echo -e \"Warning: NDK_LLVM_PATH not exist!\"\n\
+"
+#Qt运行时的environment-setup增量配置
+QT_RUNTIME_ENV_CONFIGSTR_ADD="\
+export QT_QPA_PLATFORM=eglfs\n\
+export QT_QPA_EGLFS_INTEGRATION=eglfs_sffg\n\
+export QT_QPA_EGLFS_PHYSICAL_WIDTH=200\n\
+export QT_QPA_EGLFS_PHYSICAL_HEIGHT=100\n\
+export QT_QPA_GENERIC_PLUGINS=evdevtouch:/dev/input/event3\n\
+export QT_QPA_EVDEV_TOUCHSCREEN_PARAMETERS=\"rotate=180\"\n\
+export QT_QPA_EGLFS_HIDECURSOR=1\n\
+export HOME=/data/user\n\
+export TMPDIR=/data/local/tmp\n\
+export TEMPDIR=\$TMPDIR\n\
+export XDG_DATA_HOME=/data/cache\n\
+export XDG_CONFIG_HOME=/data/system\n\
+export XDG_RUNTIME_DIR=/data/data\n\
+export XDG_CACHE_HOME=\$TMPDIR\n\
+export XDG_DATA_DIRS=\$XDG_DATA_HOME\n\
+export XDG_CONFIG_DIRS=\$XDG_CONFIG_HOME\n\
+"
